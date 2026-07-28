@@ -11,11 +11,19 @@
 </head>
 <body>
 <header>
-  <h1>JoApp </h1>
+  <h1>JoApp</h1>
 </header>
 <main id="app">
-  <p>Ça marche ! La suite arrive à la Phase 2.</p>
+  <div id="quiz">
+    <img id="bird-photo" src="" alt="Photo d'oiseau à identifier">
+    <p id="attempts">Tentative <span id="attempt-count">1</span>/4</p>
+    <input type="text" id="answer-input" placeholder="Nom de l'oiseau" autocomplete="off">
+    <button id="submit-btn">Valider</button>
+    <p id="feedback"></p>
+  </div>
 </main>
+<script src="birds.js"></script>
+<script src="game.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
