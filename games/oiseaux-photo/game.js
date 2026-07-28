@@ -1,22 +1,12 @@
 const MAX_ATTEMPTS = 4;
-const STORAGE_KEY = 'joapp_progress';
+const GAME_KEY = 'oiseaux-photo';
+let progress = loadProgress(GAME_KEY);
 
-// Mémorise, pour chaque oiseau, sa "box" (1 = pas connu, 5 = bien connu)
-function loadProgress() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : {};
-}
-function saveProgress(progress) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-}
-let progress = loadProgress();
 function getBirdState(id) {
   if (!progress[id]) progress[id] = { box: 1 };
   return progress[id];
 }
 
-// Choisit le prochain oiseau : plus sa box est basse, plus il a de chances d'apparaître
-// (mais les oiseaux bien connus reviennent quand même de temps en temps)
 function pickNextBird(excludeId) {
   const candidates = BIRDS.filter(b => b.id !== excludeId);
   const weights = candidates.map(b => 6 - getBirdState(b.id).box);
@@ -29,32 +19,6 @@ function pickNextBird(excludeId) {
   return candidates[candidates.length - 1];
 }
 
-// Vérifie la réponse en ignorant accents/majuscules et en tolérant 1-2 fautes de frappe
-function normalize(str) {
-  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z\s-]/g, '').trim().replace(/\s+/g, ' ');
-}
-function levenshtein(a, b) {
-  const m = [];
-  for (let i = 0; i <= b.length; i++) m[i] = [i];
-  for (let j = 0; j <= a.length; j++) m[0][j] = j;
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      m[i][j] = b.charAt(i - 1) === a.charAt(j - 1)
-        ? m[i - 1][j - 1]
-        : Math.min(m[i - 1][j - 1] + 1, m[i][j - 1] + 1, m[i - 1][j] + 1);
-    }
-  }
-  return m[b.length][a.length];
-}
-function isCloseEnough(input, target) {
-  const a = normalize(input), b = normalize(target);
-  if (a === b) return true;
-  const tolerance = b.length <= 5 ? 1 : Math.floor(b.length / 6) + 1;
-  return levenshtein(a, b) <= tolerance;
-}
-
-// Déroulement d'une manche
 let currentBird = null;
 let attemptsLeft = MAX_ATTEMPTS;
 const photoEl = document.getElementById('bird-photo');
@@ -81,7 +45,7 @@ function handleSubmit() {
   if (isCloseEnough(answer, currentBird.name)) {
     const state = getBirdState(currentBird.id);
     state.box = Math.min(5, state.box + 1);
-    saveProgress(progress);
+    saveProgress(GAME_KEY, progress);
     feedbackEl.textContent = `Bravo ! C'était bien "${currentBird.name}".`;
     submitBtn.disabled = true;
     setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1200);
@@ -91,7 +55,7 @@ function handleSubmit() {
   if (attemptsLeft <= 0) {
     const state = getBirdState(currentBird.id);
     state.box = 1;
-    saveProgress(progress);
+    saveProgress(GAME_KEY, progress);
     feedbackEl.textContent = `Dommage, c'était "${currentBird.name}".`;
     submitBtn.disabled = true;
     setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1600);
