@@ -1,5 +1,5 @@
 //tourne en arriere-plan, garde une copie des fichiers en memoire pour que l'appli marche sans connexion
-const CACHE_NAME = 'joapp-v8';
+const CACHE_NAME = 'joapp-v9';
 const FILES_TO_CACHE = [
   './', './index.html', './manifest.json', './icon.svg',
   './shared/style.css', './shared/utils.js', './shared/storage.js', './shared/register-sw.js',

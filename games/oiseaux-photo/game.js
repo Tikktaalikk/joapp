@@ -1,9 +1,8 @@
 const MAX_ATTEMPTS = 4;
 const GAME_KEY = 'oiseaux-photo';
 const SESSION_LENGTH = 10;
+const BOX_COLORS = { 1: '#4285f4', 2: '#43a047', 3: '#fbc02d', 4: '#fb8c00', 5: '#e53935' };
 
-// Précharge toutes les photos dès l'ouverture de la page,
-// pour qu'elles s'affichent instantanément une fois en jeu
 BIRDS.forEach((bird) => {
   const preloadImg = new Image();
   preloadImg.src = bird.image;
@@ -34,6 +33,7 @@ function pickNextBird(excludeId) {
 let currentBird = null;
 let attemptsLeft = MAX_ATTEMPTS;
 const photoEl = document.getElementById('bird-photo');
+const badgeEl = document.getElementById('box-badge');
 const inputEl = document.getElementById('answer-input');
 const feedbackEl = document.getElementById('feedback');
 const attemptCountEl = document.getElementById('attempt-count');
@@ -47,6 +47,7 @@ function nextRound() {
   currentBird = pickNextBird(currentBird ? currentBird.id : null);
   attemptsLeft = MAX_ATTEMPTS;
   photoEl.src = currentBird.image;
+  badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
   inputEl.value = '';
   feedbackEl.textContent = '';
   attemptCountEl.textContent = 1;
@@ -81,7 +82,7 @@ function handleSubmit() {
     if (attemptNumber === 1) sessionCorrectFirstTry++;
     roundsPlayed++;
 
-    feedbackEl.textContent = `Bravo ! +${xpGained} XP. C'était bien "${currentBird.name}".`;
+    feedbackEl.textContent = '';
     submitBtn.disabled = true;
     setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1200);
     return;
