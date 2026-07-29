@@ -1,7 +1,8 @@
 const MAX_ATTEMPTS = 4;
 const GAME_KEY = 'oiseaux-photo';
 const SESSION_LENGTH = 10;
-const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#fbf42d', 4: '#43a047', 5: '#4285f4' };
+const SESSION_STATS_KEY = 'oiseaux-photo-sessions';
+const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#eafb2d', 4: '#43a047', 5: '#4285f4' };
 
 BIRDS.forEach((bird) => {
   const preloadImg = new Image();
@@ -9,6 +10,11 @@ BIRDS.forEach((bird) => {
 });
 
 let progress = loadProgress(GAME_KEY);
+let sessionStats = loadProgress(SESSION_STATS_KEY);
+if (typeof sessionStats.count !== 'number') {
+  sessionStats = { count: 0, totalXp: 0, totalDurationMs: 0 };
+}
+let sessionStartTime = Date.now();
 let roundsPlayed = 0;
 let sessionXp = 0;
 let sessionCorrectFirstTry = 0;
@@ -28,6 +34,12 @@ function pickNextBird(excludeId) {
     if (r <= 0) return candidates[i];
   }
   return candidates[candidates.length - 1];
+}
+
+function formatDuration(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return m > 0 ? `${m} min ${String(s).padStart(2, '0')} s` : `${s} s`;
 }
 
 let currentBird = null;
@@ -58,8 +70,23 @@ function showSessionEnd() {
   document.getElementById('quiz').style.display = 'none';
   const endEl = document.getElementById('session-end');
   endEl.style.display = 'block';
-  document.getElementById('session-recap').textContent =
-    `Tu as gagné ${sessionXp} XP sur ${SESSION_LENGTH} oiseaux (${sessionCorrectFirstTry} du premier coup).`;
+
+  const durationMs = Date.now() - sessionStartTime;
+  sessionStats.count += 1;
+  sessionStats.totalXp += sessionXp;
+  sessionStats.totalDurationMs += durationMs;
+  saveProgress(SESSION_STATS_KEY, sessionStats);
+
+  const thisDurationSec = Math.round(durationMs / 1000);
+  const avgDurationSec = Math.round((sessionStats.totalDurationMs / sessionStats.count) / 1000);
+  const avgXp = Math.round(sessionStats.totalXp / sessionStats.count);
+
+  document.getElementById('session-recap').innerHTML = `
+    <p>Tu as gagné ${sessionXp} XP sur ${SESSION_LENGTH} oiseaux (${sessionCorrectFirstTry} du premier coup).</p>
+    <p>Temps pour cette session : ${formatDuration(thisDurationSec)}</p>
+    <p>Temps moyen par session : ${formatDuration(avgDurationSec)}</p>
+    <p>XP moyen par session : ${avgXp}</p>
+  `;
 }
 
 function handleSubmit() {
