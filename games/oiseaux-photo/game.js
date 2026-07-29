@@ -1,7 +1,7 @@
 const MAX_ATTEMPTS = 4;
 const GAME_KEY = 'oiseaux-photo';
 const SESSION_LENGTH = 10;
-const BOX_COLORS = { 1: '#4285f4', 2: '#43a047', 3: '#fbc02d', 4: '#fb8c00', 5: '#e53935' };
+const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#fbf42d', 4: '#43a047', 5: '#4285f4' };
 
 BIRDS.forEach((bird) => {
   const preloadImg = new Image();
@@ -82,9 +82,9 @@ function handleSubmit() {
     if (attemptNumber === 1) sessionCorrectFirstTry++;
     roundsPlayed++;
 
-    feedbackEl.textContent = '';
+    feedbackEl.textContent = `+${xpGained} XP`;
     submitBtn.disabled = true;
-    setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1200);
+    setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 600);
     return;
   }
 
