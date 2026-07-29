@@ -67,3 +67,20 @@ function handleSubmit() {
 submitBtn.addEventListener('click', handleSubmit);
 inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmit(); });
 nextRound();
+
+if (isCloseEnough(answer, currentBird.name)) {
+    const state = getBirdState(currentBird.id);
+    state.box = Math.min(5, state.box + 1);
+    saveProgress(GAME_KEY, progress);
+
+    const attemptNumber = MAX_ATTEMPTS - attemptsLeft + 1;
+    const xpGained = [10, 7, 5, 3][attemptNumber - 1] || 3;
+    addXp(xpGained);
+    recordDailyActivity();
+    renderStats();
+
+    feedbackEl.textContent = `Bravo ! +${xpGained} XP. C'était bien "${currentBird.name}".`;
+    submitBtn.disabled = true;
+    setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1200);
+    return;
+  }

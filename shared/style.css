@@ -12,3 +12,4 @@ main { padding:20px; text-align:center; }
 #game-list li { margin-bottom:10px; }
 #game-list a { display:block; padding:14px; background:white; border-radius:10px; text-decoration:none; color:#3c3c3c; box-shadow:0 1px 3px rgba(0,0,0,0.15); font-weight:600; }
 header a#back-link { color:white; text-decoration:none; font-size:14px; display:inline-block; margin-bottom:6px; }
+#stats-bar { color:white; font-size:14px; margin-top:6px; opacity:0.95; }
