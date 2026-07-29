@@ -13,6 +13,7 @@
 <header>
   <a href="../../index.html" id="back-link">← JoApp</a>
   <h1>Oiseaux — Photo → Nom</h1>
+  <div id="stats-bar"></div>
 </header>
 <main id="app">
   <div id="quiz">
@@ -21,6 +22,11 @@
     <input type="text" id="answer-input" placeholder="Nom de l'oiseau" autocomplete="off">
     <button id="submit-btn">Valider</button>
     <p id="feedback"></p>
+  </div>
+  <div id="session-end" style="display:none;">
+    <h2>Session terminée !</h2>
+    <p id="session-recap"></p>
+    <a href="../../index.html" class="button-link">← Retour à l'accueil</a>
   </div>
 </main>
 <script src="../../shared/utils.js"></script>
@@ -31,8 +37,3 @@
 <script src="game.js"></script>
 </body>
 </html>
-<header>
-  <a href="../../index.html" id="back-link">← JoApp</a>
-  <h1>Oiseaux — Photo → Nom</h1>
-  <div id="stats-bar"></div>
-</header>
