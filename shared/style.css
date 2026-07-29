@@ -48,3 +48,12 @@ header a#back-link { color:white; text-decoration:none; font-size:14px; display:
 #game-list a { transition: transform 0.15s ease, box-shadow 0.15s ease; }
 #game-list a:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 #game-list a:active { transform: scale(0.96); }
+#hearts { font-size: 26px; margin-bottom: 10px; }
+#hearts .heart { color: #e53935; margin: 0 4px; display: inline-block; transition: color 0.2s; }
+#hearts .heart.lost { color: #cccccc; }
+@keyframes heartLose {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+#hearts .heart.losing { animation: heartLose 0.3s ease; }

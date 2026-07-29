@@ -1,4 +1,4 @@
-const MAX_ATTEMPTS = 4;
+const MAX_ATTEMPTS = 3;
 const GAME_KEY = 'oiseaux-photo';
 const SESSION_LENGTH = 10;
 const SESSION_STATS_KEY = 'oiseaux-photo-sessions';
@@ -49,10 +49,21 @@ let attemptsLeft = MAX_ATTEMPTS;
 const photoWrapperEl = document.getElementById('photo-wrapper');
 const photoEl = document.getElementById('bird-photo');
 const badgeEl = document.getElementById('box-badge');
+const heartEls = document.querySelectorAll('#hearts .heart');
 const inputEl = document.getElementById('answer-input');
 const feedbackEl = document.getElementById('feedback');
-const attemptCountEl = document.getElementById('attempt-count');
 const submitBtn = document.getElementById('submit-btn');
+
+function resetHearts() {
+  heartEls.forEach((h) => h.classList.remove('lost', 'losing'));
+}
+
+function loseHeart(index) {
+  const heart = heartEls[index - 1];
+  if (!heart) return;
+  heart.classList.add('lost', 'losing');
+  setTimeout(() => heart.classList.remove('losing'), 300);
+}
 
 function nextRound() {
   if (roundsPlayed >= SESSION_LENGTH) {
@@ -63,9 +74,9 @@ function nextRound() {
   attemptsLeft = MAX_ATTEMPTS;
   photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
   badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
+  resetHearts();
   inputEl.value = '';
   feedbackEl.textContent = '';
-  attemptCountEl.textContent = 1;
   inputEl.focus();
 }
 
@@ -104,7 +115,7 @@ function handleSubmit() {
     saveProgress(GAME_KEY, progress);
 
     const attemptNumber = MAX_ATTEMPTS - attemptsLeft + 1;
-    const xpGained = [10, 7, 5, 3][attemptNumber - 1] || 3;
+    const xpGained = [10, 7, 5][attemptNumber - 1] || 5;
     addXp(xpGained);
     recordDailyActivity();
     renderStats();
@@ -122,6 +133,9 @@ function handleSubmit() {
   }
 
   attemptsLeft--;
+  const heartIndexLost = MAX_ATTEMPTS - attemptsLeft;
+  loseHeart(heartIndexLost);
+
   if (attemptsLeft <= 0) {
     const state = getBirdState(currentBird.id);
     state.box = 1;
@@ -134,7 +148,6 @@ function handleSubmit() {
     setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1600);
   } else {
     feedbackEl.textContent = 'Pas tout à fait, réessaie.';
-    attemptCountEl.textContent = MAX_ATTEMPTS - attemptsLeft + 1;
     inputEl.classList.add('shake');
     setTimeout(() => inputEl.classList.remove('shake'), 300);
   }
