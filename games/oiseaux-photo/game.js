@@ -2,6 +2,13 @@ const MAX_ATTEMPTS = 4;
 const GAME_KEY = 'oiseaux-photo';
 const SESSION_LENGTH = 10;
 
+// Précharge toutes les photos dès l'ouverture de la page,
+// pour qu'elles s'affichent instantanément une fois en jeu
+BIRDS.forEach((bird) => {
+  const preloadImg = new Image();
+  preloadImg.src = bird.image;
+});
+
 let progress = loadProgress(GAME_KEY);
 let roundsPlayed = 0;
 let sessionXp = 0;
