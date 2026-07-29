@@ -5,8 +5,10 @@ const SESSION_STATS_KEY = 'oiseaux-photo-sessions';
 const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#eafb2d', 4: '#43a047', 5: '#4285f4' };
 
 BIRDS.forEach((bird) => {
-  const preloadImg = new Image();
-  preloadImg.src = bird.image;
+  bird.images.forEach((url) => {
+    const preloadImg = new Image();
+    preloadImg.src = url;
+  });
 });
 
 let progress = loadProgress(GAME_KEY);
@@ -58,7 +60,7 @@ function nextRound() {
   }
   currentBird = pickNextBird(currentBird ? currentBird.id : null);
   attemptsLeft = MAX_ATTEMPTS;
-  photoEl.src = currentBird.image;
+ photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
   badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
   inputEl.value = '';
   feedbackEl.textContent = '';
