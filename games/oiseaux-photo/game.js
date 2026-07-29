@@ -2,7 +2,7 @@ const MAX_ATTEMPTS = 4;
 const GAME_KEY = 'oiseaux-photo';
 const SESSION_LENGTH = 10;
 const SESSION_STATS_KEY = 'oiseaux-photo-sessions';
-const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#eafb2d', 4: '#43a047', 5: '#4285f4' };
+const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#fbc02d', 4: '#43a047', 5: '#4285f4' };
 
 BIRDS.forEach((bird) => {
   bird.images.forEach((url) => {
@@ -46,6 +46,7 @@ function formatDuration(totalSeconds) {
 
 let currentBird = null;
 let attemptsLeft = MAX_ATTEMPTS;
+const photoWrapperEl = document.getElementById('photo-wrapper');
 const photoEl = document.getElementById('bird-photo');
 const badgeEl = document.getElementById('box-badge');
 const inputEl = document.getElementById('answer-input');
@@ -60,7 +61,7 @@ function nextRound() {
   }
   currentBird = pickNextBird(currentBird ? currentBird.id : null);
   attemptsLeft = MAX_ATTEMPTS;
- photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
+  photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
   badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
   inputEl.value = '';
   feedbackEl.textContent = '';
@@ -72,6 +73,7 @@ function showSessionEnd() {
   document.getElementById('quiz').style.display = 'none';
   const endEl = document.getElementById('session-end');
   endEl.style.display = 'block';
+  endEl.classList.add('session-end-visible');
 
   const durationMs = Date.now() - sessionStartTime;
   sessionStats.count += 1;
@@ -112,6 +114,8 @@ function handleSubmit() {
     roundsPlayed++;
 
     feedbackEl.textContent = `+${xpGained} XP`;
+    photoWrapperEl.classList.add('flash-correct');
+    setTimeout(() => photoWrapperEl.classList.remove('flash-correct'), 500);
     submitBtn.disabled = true;
     setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 600);
     return;
@@ -124,11 +128,15 @@ function handleSubmit() {
     saveProgress(GAME_KEY, progress);
     roundsPlayed++;
     feedbackEl.textContent = `Dommage, c'était "${currentBird.name}".`;
+    photoWrapperEl.classList.add('flash-wrong');
+    setTimeout(() => photoWrapperEl.classList.remove('flash-wrong'), 500);
     submitBtn.disabled = true;
     setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1600);
   } else {
     feedbackEl.textContent = 'Pas tout à fait, réessaie.';
     attemptCountEl.textContent = MAX_ATTEMPTS - attemptsLeft + 1;
+    inputEl.classList.add('shake');
+    setTimeout(() => inputEl.classList.remove('shake'), 300);
   }
 }
 
