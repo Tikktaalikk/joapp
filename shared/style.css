@@ -69,3 +69,13 @@ a.menu-card:active { transform: scale(0.97); }
 #check-path { stroke-dasharray: 120; stroke-dashoffset: 120; }
 #check-overlay.show #check-path { animation: drawCheck 0.4s ease forwards; }
 @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+#round-details { margin-top: 20px; text-align: left; background: var(--color-card); border-radius: var(--radius); padding: 12px 16px; box-shadow: var(--shadow-card); }
+#round-details h3 { margin: 0 0 10px; font-size: 15px; text-align: center; color: var(--color-text-muted); font-weight: 600; }
+#round-list { list-style: none; margin: 0; padding: 0; }
+.round-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+.round-row:last-child { border-bottom: none; }
+.round-name.correct-first { color: #43a047; font-weight: 600; }
+.round-name.correct-retry { color: #fb8c00; font-weight: 600; }
+.round-name.missed { color: #e53935; font-weight: 600; }
+.mini-heart { color: #e53935; margin-left: 2px; }
+.mini-heart.lost { color: #cccccc; }

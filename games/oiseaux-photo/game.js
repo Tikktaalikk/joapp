@@ -1,6 +1,6 @@
 const MAX_ATTEMPTS = 3;
 const GAME_KEY = 'oiseaux-photo';
-const SESSION_LENGTH = 10;
+const SESSION_LENGTH = 20;
 const SESSION_STATS_KEY = 'oiseaux-photo-sessions';
 const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#fbc02d', 4: '#43a047', 5: '#4285f4' };
 
@@ -14,12 +14,17 @@ BIRDS.forEach((bird) => {
 let progress = loadProgress(GAME_KEY);
 let sessionStats = loadProgress(SESSION_STATS_KEY);
 if (typeof sessionStats.count !== 'number') {
-  sessionStats = { count: 0, totalXp: 0, totalDurationMs: 0 };
+  sessionStats = { count: 0, totalXp: 0, totalDurationMs: 0, bestScore: 0 };
+}
+if (typeof sessionStats.bestScore !== 'number') {
+  sessionStats.bestScore = 0;
 }
 let sessionStartTime = Date.now();
 let roundsPlayed = 0;
 let sessionXp = 0;
 let sessionCorrectFirstTry = 0;
+let sessionCorrectTotal = 0;
+let roundResults = [];
 
 function getBirdState(id) {
   if (!progress[id]) progress[id] = { box: 1 };
@@ -42,6 +47,18 @@ function formatDuration(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return m > 0 ? `${m}m${String(s).padStart(2, '0')}s` : `${s}s`;
+}
+
+function renderRoundRow(result) {
+  let nameClass = 'missed';
+  if (result.correct) {
+    nameClass = result.heartsLost === 0 ? 'correct-first' : 'correct-retry';
+  }
+  let heartsHtml = '';
+  for (let i = 1; i <= MAX_ATTEMPTS; i++) {
+    heartsHtml += `<span class="mini-heart ${i <= result.heartsLost ? 'lost' : ''}">♥</span>`;
+  }
+  return `<li class="round-row"><span class="round-name ${nameClass}">${result.name}</span><span class="round-hearts">${heartsHtml}</span></li>`;
 }
 
 let currentBird = null;
@@ -95,6 +112,7 @@ function revealAndAdvance() {
   const state = getBirdState(currentBird.id);
   state.box = 1;
   saveProgress(GAME_KEY, progress);
+  roundResults.push({ name: currentBird.name, heartsLost: MAX_ATTEMPTS, correct: false });
   roundsPlayed++;
   feedbackEl.textContent = `C'était "${currentBird.name}".`;
   photoWrapperEl.classList.add('flash-wrong');
@@ -115,6 +133,9 @@ function showSessionEnd() {
   sessionStats.count += 1;
   sessionStats.totalXp += sessionXp;
   sessionStats.totalDurationMs += durationMs;
+  if (sessionCorrectTotal > sessionStats.bestScore) {
+    sessionStats.bestScore = sessionCorrectTotal;
+  }
   saveProgress(SESSION_STATS_KEY, sessionStats);
 
   const thisDurationSec = Math.round(durationMs / 1000);
@@ -122,10 +143,15 @@ function showSessionEnd() {
   const avgXp = Math.round(sessionStats.totalXp / sessionStats.count);
 
   document.getElementById('session-recap').innerHTML = `
-    <p>Tu as gagné ${sessionXp} XP sur ${SESSION_LENGTH} oiseaux (${sessionCorrectFirstTry} du premier coup).</p>
+    <p>Score : ${sessionCorrectTotal}/${SESSION_LENGTH} — Meilleur score (PB) : ${sessionStats.bestScore}/${SESSION_LENGTH}</p>
+    <p>Tu as gagné ${sessionXp} XP (${sessionCorrectFirstTry} oiseaux trouvés du premier coup).</p>
     <p>Temps pour cette session : ${formatDuration(thisDurationSec)}</p>
     <p>Temps moyen par session : ${formatDuration(avgDurationSec)}</p>
     <p>XP moyen par session : ${avgXp}</p>
+    <div id="round-details">
+      <h3>Réponses</h3>
+      <ul id="round-list">${roundResults.map(renderRoundRow).join('')}</ul>
+    </div>
   `;
 }
 
@@ -146,7 +172,9 @@ function handleSubmit() {
     renderStats();
 
     sessionXp += xpGained;
+    sessionCorrectTotal++;
     if (attemptNumber === 1) sessionCorrectFirstTry++;
+    roundResults.push({ name: currentBird.name, heartsLost: attemptNumber - 1, correct: true });
     roundsPlayed++;
 
     feedbackEl.textContent = `+${xpGained} XP`;
