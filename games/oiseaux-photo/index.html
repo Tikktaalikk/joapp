@@ -12,7 +12,7 @@
 <body>
 <header class="app-header">
   <a class="back-btn" href="../../categories/animaux/oiseaux/index.html">←</a>
-  <h1>JoApp</h1>
+  <h1><a href="../../index.html">JoApp</a></h1>
   <button class="menu-btn" aria-label="Menu">⋯</button>
 </header>
 <div id="stats-bar"></div>
@@ -25,6 +25,11 @@
     <div id="photo-wrapper">
       <img id="bird-photo" src="" alt="Photo d'oiseau à identifier">
       <span id="box-badge"></span>
+      <div id="check-overlay">
+        <svg viewBox="0 0 100 100" width="70" height="70">
+          <path id="check-path" d="M20,55 L40,75 L80,25" fill="none" stroke="#43a047" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
     <div class="hud-row">
       <div id="hearts">

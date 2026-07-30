@@ -49,6 +49,7 @@ let attemptsLeft = MAX_ATTEMPTS;
 const photoWrapperEl = document.getElementById('photo-wrapper');
 const photoEl = document.getElementById('bird-photo');
 const badgeEl = document.getElementById('box-badge');
+const checkOverlayEl = document.getElementById('check-overlay');
 const heartEls = document.querySelectorAll('#hearts .heart');
 const roundCounterEl = document.getElementById('round-counter');
 const timerEl = document.getElementById('session-timer');
@@ -83,6 +84,7 @@ function nextRound() {
   photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
   badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
   resetHearts();
+  checkOverlayEl.classList.remove('show');
   roundCounterEl.textContent = `${roundsPlayed + 1}/${SESSION_LENGTH}`;
   inputEl.value = '';
   feedbackEl.textContent = '';
@@ -148,8 +150,7 @@ function handleSubmit() {
     roundsPlayed++;
 
     feedbackEl.textContent = `+${xpGained} XP`;
-    photoWrapperEl.classList.add('flash-correct');
-    setTimeout(() => photoWrapperEl.classList.remove('flash-correct'), 500);
+    checkOverlayEl.classList.add('show');
     submitBtn.disabled = true;
     skipBtn.disabled = true;
     setTimeout(() => { submitBtn.disabled = false; skipBtn.disabled = false; nextRound(); }, 600);
