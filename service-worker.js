@@ -1,9 +1,9 @@
-const CACHE_NAME = 'joapp-v18';
+const CACHE_NAME = 'joapp-v19';
 const FILES_TO_CACHE = [
   './', './index.html', './manifest.json', './icon.svg',
   './shared/style.css', './shared/utils.js', './shared/storage.js', './shared/register-sw.js',
   './shared/gamification.js', './shared/render-stats.js',
-  './categories/animaux/index.html', './categories/animaux/oiseaux/index.html',
+  './categories/animaux/index.html', './categories/animaux/oiseaux/index.html', './categories/animaux/oiseaux/photo-nom/index.html',
   './games/oiseaux-photo/index.html', './games/oiseaux-photo/birds.js', './games/oiseaux-photo/game.js'
 ];
 self.addEventListener('install', (event) => {

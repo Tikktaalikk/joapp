@@ -4,7 +4,11 @@ const SESSION_LENGTH = 20;
 const SESSION_STATS_KEY = 'oiseaux-photo-sessions';
 const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#fbc02d', 4: '#43a047', 5: '#4285f4' };
 
-BIRDS.forEach((bird) => {
+const urlParams = new URLSearchParams(window.location.search);
+const selectedLot = urlParams.get('lot') ? Number(urlParams.get('lot')) : null;
+const ACTIVE_BIRDS = selectedLot ? BIRDS.filter((b) => b.lot === selectedLot) : BIRDS;
+
+ACTIVE_BIRDS.forEach((bird) => {
   bird.images.forEach((url) => {
     const preloadImg = new Image();
     preloadImg.src = url;
@@ -32,7 +36,7 @@ function getBirdState(id) {
 }
 
 function pickNextBird(excludeId) {
-  const candidates = BIRDS.filter(b => b.id !== excludeId);
+  const candidates = ACTIVE_BIRDS.filter(b => b.id !== excludeId);
   const weights = candidates.map(b => 6 - getBirdState(b.id).box);
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
@@ -70,6 +74,11 @@ const checkOverlayEl = document.getElementById('check-overlay');
 const heartEls = document.querySelectorAll('#hearts .heart');
 const roundCounterEl = document.getElementById('round-counter');
 const timerEl = document.getElementById('session-timer');
+const modeLabelEl = document.getElementById('mode-label');
+if (selectedLot) {
+  const lot = LOTS.find((l) => l.id === selectedLot);
+  if (lot) modeLabelEl.textContent = `photo → nom · ${lot.name}`;
+}
 const inputEl = document.getElementById('answer-input');
 const feedbackEl = document.getElementById('feedback');
 const submitBtn = document.getElementById('submit-btn');
