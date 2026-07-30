@@ -79,3 +79,7 @@ a.menu-card:active { transform: scale(0.97); }
 .round-name.missed { color: #e53935; font-weight: 600; }
 .mini-heart { color: #e53935; margin-left: 2px; }
 .mini-heart.lost { color: #cccccc; }
+#hint-btn { padding: 12px 16px; font-size: 14px; background: transparent; color: var(--color-primary); border: 1px solid var(--color-primary); border-radius: var(--radius); cursor: pointer; }
+#hint-btn:hover { background: #f5e9fb; }
+#hint-btn:disabled { opacity: 0.5; cursor: default; }
+#hint-display { text-align: center; font-size: 20px; letter-spacing: 2px; font-weight: 600; color: var(--color-primary); min-height: 26px; margin: 8px 0 0; }

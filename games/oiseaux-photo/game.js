@@ -53,6 +53,20 @@ function formatDuration(totalSeconds) {
   return m > 0 ? `${m}m${String(s).padStart(2, '0')}s` : `${s}s`;
 }
 
+// Révèle la 1re lettre de chaque mot du nom, masque le reste (garde tirets/apostrophes lisibles)
+function buildHint(name) {
+  return name.split(' ').map((word) => {
+    let revealed = false;
+    return word.split('').map((char) => {
+      if (/[a-zA-ZÀ-ÿ]/.test(char)) {
+        if (!revealed) { revealed = true; return char; }
+        return '_';
+      }
+      return char;
+    }).join('');
+  }).join(' ');
+}
+
 function renderRoundRow(result) {
   let nameClass = 'missed';
   if (result.correct) {
@@ -67,6 +81,7 @@ function renderRoundRow(result) {
 
 let currentBird = null;
 let attemptsLeft = MAX_ATTEMPTS;
+let hintUsed = false;
 const photoWrapperEl = document.getElementById('photo-wrapper');
 const photoEl = document.getElementById('bird-photo');
 const badgeEl = document.getElementById('box-badge');
@@ -75,14 +90,17 @@ const heartEls = document.querySelectorAll('#hearts .heart');
 const roundCounterEl = document.getElementById('round-counter');
 const timerEl = document.getElementById('session-timer');
 const modeLabelEl = document.getElementById('mode-label');
+const inputEl = document.getElementById('answer-input');
+const feedbackEl = document.getElementById('feedback');
+const hintDisplayEl = document.getElementById('hint-display');
+const submitBtn = document.getElementById('submit-btn');
+const skipBtn = document.getElementById('skip-btn');
+const hintBtn = document.getElementById('hint-btn');
+
 if (selectedLot) {
   const lot = LOTS.find((l) => l.id === selectedLot);
   if (lot) modeLabelEl.textContent = `photo → nom · ${lot.name}`;
 }
-const inputEl = document.getElementById('answer-input');
-const feedbackEl = document.getElementById('feedback');
-const submitBtn = document.getElementById('submit-btn');
-const skipBtn = document.getElementById('skip-btn');
 
 const timerInterval = setInterval(() => {
   const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
@@ -107,10 +125,13 @@ function nextRound() {
   }
   currentBird = pickNextBird(currentBird ? currentBird.id : null);
   attemptsLeft = MAX_ATTEMPTS;
+  hintUsed = false;
   photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
   badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
   resetHearts();
   checkOverlayEl.classList.remove('show');
+  hintDisplayEl.textContent = '';
+  hintBtn.disabled = false;
   roundCounterEl.textContent = `${roundsPlayed + 1}/${SESSION_LENGTH}`;
   inputEl.value = '';
   feedbackEl.textContent = '';
@@ -128,6 +149,7 @@ function revealAndAdvance() {
   setTimeout(() => photoWrapperEl.classList.remove('flash-wrong'), 500);
   submitBtn.disabled = true;
   skipBtn.disabled = true;
+  hintBtn.disabled = true;
   setTimeout(() => { submitBtn.disabled = false; skipBtn.disabled = false; nextRound(); }, 1600);
 }
 
@@ -175,14 +197,15 @@ function handleSubmit() {
     saveProgress(GAME_KEY, progress);
 
     const attemptNumber = MAX_ATTEMPTS - attemptsLeft + 1;
-    const xpGained = [10, 7, 5][attemptNumber - 1] || 5;
+    const tier = (hintUsed && attemptNumber < 2) ? 2 : attemptNumber;
+    const xpGained = [10, 7, 5][tier - 1] || 5;
     addXp(xpGained);
     recordDailyActivity();
     renderStats();
 
     sessionXp += xpGained;
     sessionCorrectTotal++;
-    if (attemptNumber === 1) sessionCorrectFirstTry++;
+    if (attemptNumber === 1 && !hintUsed) sessionCorrectFirstTry++;
     roundResults.push({ name: currentBird.name, heartsLost: attemptNumber - 1, correct: true });
     roundsPlayed++;
 
@@ -190,6 +213,7 @@ function handleSubmit() {
     checkOverlayEl.classList.add('show');
     submitBtn.disabled = true;
     skipBtn.disabled = true;
+    hintBtn.disabled = true;
     setTimeout(() => { submitBtn.disabled = false; skipBtn.disabled = false; nextRound(); }, 600);
     return;
   }
@@ -211,6 +235,12 @@ submitBtn.addEventListener('click', handleSubmit);
 skipBtn.addEventListener('click', () => {
   if (!currentBird) return;
   revealAndAdvance();
+});
+hintBtn.addEventListener('click', () => {
+  if (!currentBird || hintUsed) return;
+  hintUsed = true;
+  hintDisplayEl.textContent = buildHint(currentBird.name);
+  hintBtn.disabled = true;
 });
 inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmit(); });
 nextRound();
