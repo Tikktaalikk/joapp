@@ -53,18 +53,48 @@ function formatDuration(totalSeconds) {
   return m > 0 ? `${m}m${String(s).padStart(2, '0')}s` : `${s}s`;
 }
 
-// Révèle la 1re lettre de chaque mot du nom, masque le reste (garde tirets/apostrophes lisibles)
-function buildHint(name) {
-  return name.split(' ').map((word) => {
-    let revealed = false;
-    return word.split('').map((char) => {
-      if (/[a-zA-ZÀ-ÿ]/.test(char)) {
-        if (!revealed) { revealed = true; return char; }
-        return '_';
-      }
-      return char;
-    }).join('');
-  }).join(' ');
+// Masque un mot en ne révélant que sa 1re lettre
+function maskWord(word) {
+  let revealed = false;
+  return word.split('').map((char) => {
+    if (/[a-zA-ZÀ-ÿ]/.test(char)) {
+      if (!revealed) { revealed = true; return char; }
+      return '_';
+    }
+    return char;
+  }).join('');
+}
+
+// Reconstruit l'affichage de l'indice à partir de 2 sources :
+// les mots trouvés en entier (via une tentative partielle) et
+// le masquage lettre par lettre (si le bouton Indice a été utilisé)
+function updateHintDisplay() {
+  const words = currentBird.name.split(' ');
+  const parts = words.map((word, i) => {
+    if (revealedWordsFull[i]) return word;
+    if (hintUsed) return maskWord(word);
+    return '';
+  }).filter((w) => w !== '');
+  hintDisplayEl.textContent = parts.join(' ');
+}
+
+// Compare chaque mot de la tentative avec chaque mot du nom complet ;
+// si un mot correspond exactement (accents/majuscules ignorés), il est révélé.
+function checkPartialWordMatch(answer) {
+  const targetWords = currentBird.name.split(' ');
+  const answerWords = answer.trim().split(/\s+/);
+  let changed = false;
+  targetWords.forEach((tWord, i) => {
+    if (revealedWordsFull[i]) return;
+    const tNorm = normalize(tWord);
+    if (!tNorm) return;
+    const found = answerWords.some((aWord) => normalize(aWord) === tNorm);
+    if (found) {
+      revealedWordsFull[i] = true;
+      changed = true;
+    }
+  });
+  if (changed) updateHintDisplay();
 }
 
 function renderRoundRow(result) {
@@ -82,6 +112,7 @@ function renderRoundRow(result) {
 let currentBird = null;
 let attemptsLeft = MAX_ATTEMPTS;
 let hintUsed = false;
+let revealedWordsFull = [];
 const photoWrapperEl = document.getElementById('photo-wrapper');
 const photoEl = document.getElementById('bird-photo');
 const badgeEl = document.getElementById('box-badge');
@@ -126,6 +157,7 @@ function nextRound() {
   currentBird = pickNextBird(currentBird ? currentBird.id : null);
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
+  revealedWordsFull = currentBird.name.split(' ').map(() => false);
   photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
   badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
   resetHearts();
@@ -219,6 +251,7 @@ function handleSubmit() {
   }
 
   attemptsLeft--;
+  checkPartialWordMatch(answer);
   const heartIndexLost = MAX_ATTEMPTS - attemptsLeft;
   loseHeart(heartIndexLost);
 
@@ -239,7 +272,7 @@ skipBtn.addEventListener('click', () => {
 hintBtn.addEventListener('click', () => {
   if (!currentBird || hintUsed) return;
   hintUsed = true;
-  hintDisplayEl.textContent = buildHint(currentBird.name);
+  updateHintDisplay();
   hintBtn.disabled = true;
 });
 inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmit(); });
