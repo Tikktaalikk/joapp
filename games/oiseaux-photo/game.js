@@ -41,7 +41,7 @@ function pickNextBird(excludeId) {
 function formatDuration(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
-  return m > 0 ? `${m} min ${String(s).padStart(2, '0')} s` : `${s} s`;
+  return m > 0 ? `${m}m${String(s).padStart(2, '0')}s` : `${s}s`;
 }
 
 let currentBird = null;
@@ -50,10 +50,17 @@ const photoWrapperEl = document.getElementById('photo-wrapper');
 const photoEl = document.getElementById('bird-photo');
 const badgeEl = document.getElementById('box-badge');
 const heartEls = document.querySelectorAll('#hearts .heart');
+const roundCounterEl = document.getElementById('round-counter');
+const timerEl = document.getElementById('session-timer');
 const inputEl = document.getElementById('answer-input');
 const feedbackEl = document.getElementById('feedback');
 const submitBtn = document.getElementById('submit-btn');
 const skipBtn = document.getElementById('skip-btn');
+
+const timerInterval = setInterval(() => {
+  const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+  timerEl.textContent = formatDuration(elapsed);
+}, 1000);
 
 function resetHearts() {
   heartEls.forEach((h) => h.classList.remove('lost', 'losing'));
@@ -76,13 +83,12 @@ function nextRound() {
   photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
   badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
   resetHearts();
+  roundCounterEl.textContent = `${roundsPlayed + 1}/${SESSION_LENGTH}`;
   inputEl.value = '';
   feedbackEl.textContent = '';
   inputEl.focus();
 }
 
-// Affiche la bonne réponse et passe à l'oiseau suivant : utilisé quand les
-// cœurs sont épuisés, et quand on appuie sur "Je ne sais pas".
 function revealAndAdvance() {
   const state = getBirdState(currentBird.id);
   state.box = 1;
@@ -97,6 +103,7 @@ function revealAndAdvance() {
 }
 
 function showSessionEnd() {
+  clearInterval(timerInterval);
   document.getElementById('quiz').style.display = 'none';
   const endEl = document.getElementById('session-end');
   endEl.style.display = 'block';

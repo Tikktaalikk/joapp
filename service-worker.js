@@ -1,9 +1,9 @@
-//tourne en arriere-plan, garde une copie des fichiers en memoire pour que l'appli marche sans connexion
-const CACHE_NAME = 'joapp-v15';
+const CACHE_NAME = 'joapp-v16';
 const FILES_TO_CACHE = [
   './', './index.html', './manifest.json', './icon.svg',
   './shared/style.css', './shared/utils.js', './shared/storage.js', './shared/register-sw.js',
   './shared/gamification.js', './shared/render-stats.js',
+  './categories/animaux/index.html', './categories/animaux/oiseaux/index.html',
   './games/oiseaux-photo/index.html', './games/oiseaux-photo/birds.js', './games/oiseaux-photo/game.js'
 ];
 self.addEventListener('install', (event) => {
