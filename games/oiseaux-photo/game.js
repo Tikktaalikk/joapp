@@ -53,6 +53,7 @@ const heartEls = document.querySelectorAll('#hearts .heart');
 const inputEl = document.getElementById('answer-input');
 const feedbackEl = document.getElementById('feedback');
 const submitBtn = document.getElementById('submit-btn');
+const skipBtn = document.getElementById('skip-btn');
 
 function resetHearts() {
   heartEls.forEach((h) => h.classList.remove('lost', 'losing'));
@@ -78,6 +79,21 @@ function nextRound() {
   inputEl.value = '';
   feedbackEl.textContent = '';
   inputEl.focus();
+}
+
+// Affiche la bonne réponse et passe à l'oiseau suivant : utilisé quand les
+// cœurs sont épuisés, et quand on appuie sur "Je ne sais pas".
+function revealAndAdvance() {
+  const state = getBirdState(currentBird.id);
+  state.box = 1;
+  saveProgress(GAME_KEY, progress);
+  roundsPlayed++;
+  feedbackEl.textContent = `C'était "${currentBird.name}".`;
+  photoWrapperEl.classList.add('flash-wrong');
+  setTimeout(() => photoWrapperEl.classList.remove('flash-wrong'), 500);
+  submitBtn.disabled = true;
+  skipBtn.disabled = true;
+  setTimeout(() => { submitBtn.disabled = false; skipBtn.disabled = false; nextRound(); }, 1600);
 }
 
 function showSessionEnd() {
@@ -128,7 +144,8 @@ function handleSubmit() {
     photoWrapperEl.classList.add('flash-correct');
     setTimeout(() => photoWrapperEl.classList.remove('flash-correct'), 500);
     submitBtn.disabled = true;
-    setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 600);
+    skipBtn.disabled = true;
+    setTimeout(() => { submitBtn.disabled = false; skipBtn.disabled = false; nextRound(); }, 600);
     return;
   }
 
@@ -137,15 +154,7 @@ function handleSubmit() {
   loseHeart(heartIndexLost);
 
   if (attemptsLeft <= 0) {
-    const state = getBirdState(currentBird.id);
-    state.box = 1;
-    saveProgress(GAME_KEY, progress);
-    roundsPlayed++;
-    feedbackEl.textContent = `Dommage, c'était "${currentBird.name}".`;
-    photoWrapperEl.classList.add('flash-wrong');
-    setTimeout(() => photoWrapperEl.classList.remove('flash-wrong'), 500);
-    submitBtn.disabled = true;
-    setTimeout(() => { submitBtn.disabled = false; nextRound(); }, 1600);
+    revealAndAdvance();
   } else {
     feedbackEl.textContent = 'Pas tout à fait, réessaie.';
     inputEl.classList.add('shake');
@@ -154,5 +163,9 @@ function handleSubmit() {
 }
 
 submitBtn.addEventListener('click', handleSubmit);
+skipBtn.addEventListener('click', () => {
+  if (!currentBird) return;
+  revealAndAdvance();
+});
 inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmit(); });
 nextRound();
