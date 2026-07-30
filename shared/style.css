@@ -47,7 +47,8 @@ a.menu-card:active { transform: scale(0.97); }
 #submit-btn { flex: 1; padding: 12px; font-size: 16px; background: var(--color-primary); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; }
 #skip-btn { padding: 12px 16px; font-size: 14px; background: transparent; color: var(--color-text-muted); border: 1px solid #ddd; border-radius: var(--radius); cursor: pointer; }
 #skip-btn:hover { background: #f0f0f0; }
-#feedback { margin-top: 12px; font-weight: bold; min-height: 24px; text-align: center; }
+#feedback { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 0; font-weight: 700; font-size: 15px; text-align: center; color: white; z-index: 3; pointer-events: none; }
+#feedback:not(:empty) { padding: 10px 12px; background: rgba(0,0,0,0.6); border-radius: 0 0 var(--radius) var(--radius); }
 
 #session-end { max-width: 400px; margin: 0 auto; padding: 0 16px; text-align: center; }
 .button-link { display: inline-block; margin-top: 14px; padding: 12px 24px; background: var(--color-primary); color: white; border-radius: var(--radius); text-decoration: none; font-weight: 600; }
