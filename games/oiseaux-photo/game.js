@@ -4,6 +4,15 @@ const SESSION_LENGTH = 20;
 const SESSION_STATS_KEY = 'oiseaux-photo-sessions';
 const BOX_COLORS = { 1: '#e53935', 2: '#fb8c00', 3: '#fbc02d', 4: '#43a047', 5: '#4285f4' };
 
+const CORRECT_PHRASES = ['Bien joué', 'Nickel', 'Pile dans le mille', 'Exact', 'Joli coup', 'Parfait', 'Bien vu'];
+const WRONG_RETRY_PHRASES = ['Pas tout à fait, réessaie.', 'Presque !', 'Pas cette fois, retente.', 'Encore un essai !', 'Pas ça...'];
+const LOSS_PHRASES = ['Dommage, c\'était', 'Pas grave, c\'était', 'Ce sera pour une prochaine fois : c\'était', 'Aïe, c\'était'];
+const SKIP_PHRASES = ['C\'était', 'Pas de souci, c\'était', 'Bonne question ! C\'était', 'Pour info, c\'était'];
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 const urlParams = new URLSearchParams(window.location.search);
 const selectedLot = urlParams.get('lot') ? Number(urlParams.get('lot')) : null;
 const ACTIVE_BIRDS = selectedLot ? BIRDS.filter((b) => b.lot === selectedLot) : BIRDS;
@@ -29,6 +38,7 @@ let sessionXp = 0;
 let sessionCorrectFirstTry = 0;
 let sessionCorrectTotal = 0;
 let roundResults = [];
+let sessionEnded = false;
 
 function getBirdState(id) {
   if (!progress[id]) progress[id] = { box: 1 };
@@ -53,7 +63,6 @@ function formatDuration(totalSeconds) {
   return m > 0 ? `${m}m${String(s).padStart(2, '0')}s` : `${s}s`;
 }
 
-// Masque un mot en ne révélant que sa 1re lettre
 function maskWord(word) {
   let revealed = false;
   return word.split('').map((char) => {
@@ -65,9 +74,6 @@ function maskWord(word) {
   }).join('');
 }
 
-// Reconstruit l'affichage de l'indice à partir de 2 sources :
-// les mots trouvés en entier (via une tentative partielle) et
-// le masquage lettre par lettre (si le bouton Indice a été utilisé)
 function updateHintDisplay() {
   const words = currentBird.name.split(' ');
   const parts = words.map((word, i) => {
@@ -78,8 +84,6 @@ function updateHintDisplay() {
   hintDisplayEl.textContent = parts.join(' ');
 }
 
-// Compare chaque mot de la tentative avec chaque mot du nom complet ;
-// si un mot correspond exactement (accents/majuscules ignorés), il est révélé.
 function checkPartialWordMatch(answer) {
   const targetWords = currentBird.name.split(' ');
   const answerWords = answer.trim().split(/\s+/);
@@ -133,6 +137,7 @@ const hintDisplayEl = document.getElementById('hint-display');
 const submitBtn = document.getElementById('submit-btn');
 const skipBtn = document.getElementById('skip-btn');
 const hintBtn = document.getElementById('hint-btn');
+const abandonBtn = document.getElementById('abandon-btn');
 
 if (selectedLot) {
   const lot = LOTS.find((l) => l.id === selectedLot);
@@ -156,16 +161,19 @@ function loseHeart(index) {
 }
 
 function nextRound() {
+  if (sessionEnded) return;
   if (roundsPlayed >= SESSION_LENGTH) {
-    showSessionEnd();
+    showSessionEnd(false);
     return;
   }
   currentBird = pickNextBird(currentBird ? currentBird.id : null);
   attemptsLeft = MAX_ATTEMPTS;
   hintUsed = false;
   revealedWordsFull = currentBird.name.split(' ').map(() => false);
-  photoEl.src = currentBird.images[Math.floor(Math.random() * currentBird.images.length)];
-  badgeEl.style.background = BOX_COLORS[getBirdState(currentBird.id).box];
+  const box = getBirdState(currentBird.id).box;
+  const photoPool = box >= 5 ? currentBird.images : [currentBird.images[0]];
+  photoEl.src = photoPool[Math.floor(Math.random() * photoPool.length)];
+  badgeEl.style.background = BOX_COLORS[box];
   resetHearts();
   checkOverlayEl.classList.remove('show');
   hintDisplayEl.textContent = '';
@@ -176,13 +184,14 @@ function nextRound() {
   inputEl.focus();
 }
 
-function revealAndAdvance() {
+function revealAndAdvance(isSkip) {
   const state = getBirdState(currentBird.id);
   state.box = 1;
   saveProgress(GAME_KEY, progress);
   roundResults.push({ name: currentBird.name, wiki: currentBird.wiki, heartsLost: MAX_ATTEMPTS, correct: false });
   roundsPlayed++;
-  feedbackEl.textContent = `C'était "${currentBird.name}".`;
+  const phrase = pickRandom(isSkip ? SKIP_PHRASES : LOSS_PHRASES);
+  feedbackEl.textContent = `${phrase} "${currentBird.name}".`;
   photoWrapperEl.classList.add('flash-wrong');
   setTimeout(() => photoWrapperEl.classList.remove('flash-wrong'), 500);
   submitBtn.disabled = true;
@@ -191,7 +200,8 @@ function revealAndAdvance() {
   setTimeout(() => { submitBtn.disabled = false; skipBtn.disabled = false; nextRound(); }, 1600);
 }
 
-function showSessionEnd() {
+function showSessionEnd(abandoned) {
+  sessionEnded = true;
   clearInterval(timerInterval);
   document.getElementById('quiz').style.display = 'none';
   const endEl = document.getElementById('session-end');
@@ -199,20 +209,26 @@ function showSessionEnd() {
   endEl.classList.add('session-end-visible');
 
   const durationMs = Date.now() - sessionStartTime;
-  sessionStats.count += 1;
-  sessionStats.totalXp += sessionXp;
-  sessionStats.totalDurationMs += durationMs;
-  if (sessionCorrectTotal > sessionStats.bestScore) {
-    sessionStats.bestScore = sessionCorrectTotal;
+  let recapExtra = '';
+  if (!abandoned) {
+    sessionStats.count += 1;
+    sessionStats.totalXp += sessionXp;
+    sessionStats.totalDurationMs += durationMs;
+    if (sessionCorrectTotal > sessionStats.bestScore) {
+      sessionStats.bestScore = sessionCorrectTotal;
+    }
+    saveProgress(SESSION_STATS_KEY, sessionStats);
+  } else {
+    recapExtra = '<p class="abandoned-note">Session abandonnée — non comptabilisée dans tes moyennes.</p>';
   }
-  saveProgress(SESSION_STATS_KEY, sessionStats);
 
   const thisDurationSec = Math.round(durationMs / 1000);
-  const avgDurationSec = Math.round((sessionStats.totalDurationMs / sessionStats.count) / 1000);
-  const avgXp = Math.round(sessionStats.totalXp / sessionStats.count);
+  const avgDurationSec = sessionStats.count > 0 ? Math.round((sessionStats.totalDurationMs / sessionStats.count) / 1000) : 0;
+  const avgXp = sessionStats.count > 0 ? Math.round(sessionStats.totalXp / sessionStats.count) : 0;
 
   document.getElementById('session-recap').innerHTML = `
-    <p>Score : ${sessionCorrectTotal}/${SESSION_LENGTH} — Meilleur score (PB) : ${sessionStats.bestScore}/${SESSION_LENGTH}</p>
+    ${recapExtra}
+    <p>Score : ${sessionCorrectTotal}/${roundsPlayed} — Meilleur score (PB) : ${sessionStats.bestScore}/${SESSION_LENGTH}</p>
     <p>Tu as gagné ${sessionXp} XP (${sessionCorrectFirstTry} oiseaux trouvés du premier coup).</p>
     <p>Temps pour cette session : ${formatDuration(thisDurationSec)}</p>
     <p>Temps moyen par session : ${formatDuration(avgDurationSec)}</p>
@@ -247,7 +263,7 @@ function handleSubmit() {
     roundResults.push({ name: currentBird.name, wiki: currentBird.wiki, heartsLost: attemptNumber - 1, correct: true });
     roundsPlayed++;
 
-    feedbackEl.textContent = `+${xpGained} XP`;
+    feedbackEl.textContent = `${pickRandom(CORRECT_PHRASES)} ! +${xpGained} XP`;
     checkOverlayEl.classList.add('show');
     submitBtn.disabled = true;
     skipBtn.disabled = true;
@@ -262,9 +278,9 @@ function handleSubmit() {
   loseHeart(heartIndexLost);
 
   if (attemptsLeft <= 0) {
-    revealAndAdvance();
+    revealAndAdvance(false);
   } else {
-    feedbackEl.textContent = 'Pas tout à fait, réessaie.';
+    feedbackEl.textContent = pickRandom(WRONG_RETRY_PHRASES);
     inputEl.classList.add('shake');
     setTimeout(() => inputEl.classList.remove('shake'), 300);
   }
@@ -273,13 +289,18 @@ function handleSubmit() {
 submitBtn.addEventListener('click', handleSubmit);
 skipBtn.addEventListener('click', () => {
   if (!currentBird) return;
-  revealAndAdvance();
+  revealAndAdvance(true);
 });
 hintBtn.addEventListener('click', () => {
   if (!currentBird || hintUsed) return;
   hintUsed = true;
   updateHintDisplay();
   hintBtn.disabled = true;
+});
+abandonBtn.addEventListener('click', () => {
+  if (sessionEnded || !currentBird) return;
+  if (!confirm('Abandonner cette session ? Ta progression sur les oiseaux déjà joués reste enregistrée, mais cette session ne comptera pas dans tes moyennes.')) return;
+  showSessionEnd(true);
 });
 inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmit(); });
 nextRound();
