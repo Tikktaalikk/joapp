@@ -106,7 +106,13 @@ function renderRoundRow(result) {
   for (let i = 1; i <= MAX_ATTEMPTS; i++) {
     heartsHtml += `<span class="mini-heart ${i <= result.heartsLost ? 'lost' : ''}">♥</span>`;
   }
-  return `<li class="round-row"><span class="round-name ${nameClass}">${result.name}</span><span class="round-hearts">${heartsHtml}</span></li>`;
+  return `<li class="round-row">
+    <span class="round-name-group">
+      <span class="round-name ${nameClass}">${result.name}</span>
+      <a class="wiki-link" href="${result.wiki}" target="_blank" rel="noopener">Wikipédia</a>
+    </span>
+    <span class="round-hearts">${heartsHtml}</span>
+  </li>`;
 }
 
 let currentBird = null;
@@ -174,7 +180,7 @@ function revealAndAdvance() {
   const state = getBirdState(currentBird.id);
   state.box = 1;
   saveProgress(GAME_KEY, progress);
-  roundResults.push({ name: currentBird.name, heartsLost: MAX_ATTEMPTS, correct: false });
+  roundResults.push({ name: currentBird.name, wiki: currentBird.wiki, heartsLost: MAX_ATTEMPTS, correct: false });
   roundsPlayed++;
   feedbackEl.textContent = `C'était "${currentBird.name}".`;
   photoWrapperEl.classList.add('flash-wrong');
@@ -238,7 +244,7 @@ function handleSubmit() {
     sessionXp += xpGained;
     sessionCorrectTotal++;
     if (attemptNumber === 1 && !hintUsed) sessionCorrectFirstTry++;
-    roundResults.push({ name: currentBird.name, heartsLost: attemptNumber - 1, correct: true });
+    roundResults.push({ name: currentBird.name, wiki: currentBird.wiki, heartsLost: attemptNumber - 1, correct: true });
     roundsPlayed++;
 
     feedbackEl.textContent = `+${xpGained} XP`;
