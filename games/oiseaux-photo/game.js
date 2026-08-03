@@ -166,8 +166,11 @@ function loseHeart(index) {
   setTimeout(() => heart.classList.remove('losing'), 300);
 }
 
+let wikiPanelShownAt = 0;
+
 function dismissWikiPanel() {
-  document.removeEventListener('keydown', dismissWikiPanel);
+  if (Date.now() - wikiPanelShownAt < 300) return;
+  document.removeEventListener('keyup', dismissWikiPanel);
   wikiPanelEl.removeEventListener('click', dismissWikiPanel);
   wikiPanelEl.style.display = 'none';
   quizControlsEl.style.display = '';
@@ -179,6 +182,7 @@ function showWikiPanel(bird) {
   wikiPanelEl.style.display = 'block';
   wikiExtractEl.textContent = 'Chargement…';
   wikiLinkEl.href = bird.wiki;
+  wikiPanelShownAt = Date.now();
 
   const title = bird.wiki.split('/wiki/')[1];
   fetch(`https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)
@@ -190,7 +194,7 @@ function showWikiPanel(bird) {
       wikiExtractEl.textContent = 'Impossible de charger le résumé pour le moment.';
     });
 
-  document.addEventListener('keydown', dismissWikiPanel);
+  document.addEventListener('keyup', dismissWikiPanel);
   wikiPanelEl.addEventListener('click', dismissWikiPanel);
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'joapp-v26';
+const CACHE_NAME = 'joapp-v27';
 const FILES_TO_CACHE = [
   './', './index.html', './manifest.json', './icon.svg',
   './shared/style.css', './shared/utils.js', './shared/storage.js', './shared/register-sw.js',
