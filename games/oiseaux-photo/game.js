@@ -138,6 +138,12 @@ const submitBtn = document.getElementById('submit-btn');
 const skipBtn = document.getElementById('skip-btn');
 const hintBtn = document.getElementById('hint-btn');
 const abandonBtn = document.getElementById('abandon-btn');
+const quizControlsEl = document.getElementById('quiz-controls');
+const wikiPanelEl = document.getElementById('wiki-panel');
+const wikiExtractEl = document.getElementById('wiki-extract');
+const wikiLinkEl = document.getElementById('wiki-link');
+
+wikiLinkEl.addEventListener('click', (e) => e.stopPropagation());
 
 if (selectedLot) {
   const lot = LOTS.find((l) => l.id === selectedLot);
@@ -158,6 +164,34 @@ function loseHeart(index) {
   if (!heart) return;
   heart.classList.add('lost', 'losing');
   setTimeout(() => heart.classList.remove('losing'), 300);
+}
+
+function dismissWikiPanel() {
+  document.removeEventListener('keydown', dismissWikiPanel);
+  wikiPanelEl.removeEventListener('click', dismissWikiPanel);
+  wikiPanelEl.style.display = 'none';
+  quizControlsEl.style.display = '';
+  nextRound();
+}
+
+function showWikiPanel(bird) {
+  quizControlsEl.style.display = 'none';
+  wikiPanelEl.style.display = 'block';
+  wikiExtractEl.textContent = 'Chargement…';
+  wikiLinkEl.href = bird.wiki;
+
+  const title = bird.wiki.split('/wiki/')[1];
+  fetch(`https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)
+    .then((res) => (res.ok ? res.json() : Promise.reject()))
+    .then((data) => {
+      wikiExtractEl.textContent = data.extract || 'Pas de résumé disponible pour cet oiseau.';
+    })
+    .catch(() => {
+      wikiExtractEl.textContent = 'Impossible de charger le résumé pour le moment.';
+    });
+
+  document.addEventListener('keydown', dismissWikiPanel);
+  wikiPanelEl.addEventListener('click', dismissWikiPanel);
 }
 
 function nextRound() {
@@ -185,19 +219,19 @@ function nextRound() {
 }
 
 function revealAndAdvance(isSkip) {
-  const state = getBirdState(currentBird.id);
+  const bird = currentBird;
+  const state = getBirdState(bird.id);
   state.box = 1;
   saveProgress(GAME_KEY, progress);
-  roundResults.push({ name: currentBird.name, wiki: currentBird.wiki, heartsLost: MAX_ATTEMPTS, correct: false });
+  roundResults.push({ name: bird.name, wiki: bird.wiki, heartsLost: MAX_ATTEMPTS, correct: false });
   roundsPlayed++;
   const phrase = pickRandom(isSkip ? SKIP_PHRASES : LOSS_PHRASES);
-  feedbackEl.textContent = `${phrase} "${currentBird.name}".`;
+  feedbackEl.textContent = `${phrase} "${bird.name}".`;
   photoWrapperEl.classList.add('flash-wrong');
-  setTimeout(() => photoWrapperEl.classList.remove('flash-wrong'), 500);
-  submitBtn.disabled = true;
-  skipBtn.disabled = true;
-  hintBtn.disabled = true;
-  setTimeout(() => { submitBtn.disabled = false; skipBtn.disabled = false; nextRound(); }, 1600);
+  setTimeout(() => {
+    photoWrapperEl.classList.remove('flash-wrong');
+    showWikiPanel(bird);
+  }, 600);
 }
 
 function showSessionEnd(abandoned) {
